@@ -1,40 +1,15 @@
 "use client";
 
-import { useState } from "react";
 import type { Workload, WorkloadStatus } from "@/lib/insforge";
 import { StatusBadge } from "./workload-list";
 
 interface WorkloadDetailProps {
   workload: Workload | null;
-  onRefreshed: (workload: Workload) => void;
+  liveState: "connecting" | "connected" | "reconnecting";
+  liveMessage: string | null;
 }
 
-export default function WorkloadDetail({ workload, onRefreshed }: WorkloadDetailProps) {
-  const [refreshing, setRefreshing] = useState(false);
-  const [refreshError, setRefreshError] = useState<string | null>(null);
-
-  async function handleRefresh() {
-    if (!workload) return;
-    setRefreshing(true);
-    setRefreshError(null);
-
-    try {
-      const res = await fetch(`/api/workloads/${workload.id}/refresh`, {
-        method: "POST",
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        setRefreshError(data.error ?? "Refresh failed");
-        return;
-      }
-      onRefreshed(data as Workload);
-    } catch {
-      setRefreshError("Network error — could not reach the API");
-    } finally {
-      setRefreshing(false);
-    }
-  }
-
+export default function WorkloadDetail({ workload, liveState, liveMessage }: WorkloadDetailProps) {
   // No selection state
   if (!workload) {
     return (
@@ -44,7 +19,7 @@ export default function WorkloadDetail({ workload, onRefreshed }: WorkloadDetail
     );
   }
 
-  const canRefresh = !!workload.jungle_grid_job_id;
+  const canStream = !!workload.jungle_grid_job_id;
 
   return (
     <div className="rounded-xl border border-white/8 bg-white/3 divide-y divide-white/8">
@@ -71,32 +46,18 @@ export default function WorkloadDetail({ workload, onRefreshed }: WorkloadDetail
         <MetaRow label="Updated" value={new Date(workload.updated_at).toLocaleString()} />
       </div>
 
-      {/* Refresh action */}
-      {canRefresh && (
+      {canStream ? (
         <div className="px-5 py-4 flex items-center gap-3">
-          <button
-            onClick={handleRefresh}
-            disabled={refreshing || !canRefresh}
-            className="inline-flex items-center gap-2 rounded-lg bg-white/8 hover:bg-white/12 disabled:opacity-50 disabled:cursor-not-allowed px-4 py-2 text-sm font-medium text-white transition-colors"
-          >
-            {refreshing ? (
-              <>
-                <span className="inline-block h-3.5 w-3.5 rounded-full border-2 border-white/30 border-t-white animate-spin" />
-                Refreshing…
-              </>
-            ) : (
-              "Refresh from Jungle Grid"
-            )}
-          </button>
-          {refreshError && (
-            <span className="text-xs text-red-400">{refreshError}</span>
+          <LiveUpdateBadge state={liveState} />
+          {liveMessage ? (
+            <span className="text-xs text-amber-300">{liveMessage}</span>
+          ) : (
+            <span className="text-xs text-white/30">Status and logs update automatically.</span>
           )}
         </div>
-      )}
-
-      {!canRefresh && (
+      ) : (
         <div className="px-5 py-4 flex items-center gap-3">
-          <span className="text-xs text-white/30">No Jungle Grid job id yet</span>
+          <span className="text-xs text-white/30">Waiting for Jungle Grid job id to start live updates.</span>
         </div>
       )}
 
@@ -140,5 +101,28 @@ function LogPanel({ label, content, emptyMsg }: { label: string; content: string
         <p className="text-xs text-white/25 italic">{emptyMsg}</p>
       )}
     </div>
+  );
+}
+
+function LiveUpdateBadge({ state }: { state: WorkloadDetailProps["liveState"] }) {
+  const dotClass =
+    state === "connected"
+      ? "bg-emerald-400"
+      : state === "reconnecting"
+        ? "bg-amber-400 animate-pulse"
+        : "bg-white/30 animate-pulse";
+
+  const label =
+    state === "connected"
+      ? "Live stream active"
+      : state === "reconnecting"
+        ? "Reconnecting live stream"
+        : "Connecting live stream";
+
+  return (
+    <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-white/60">
+      <span className={`h-2 w-2 rounded-full ${dotClass}`} />
+      {label}
+    </span>
   );
 }
