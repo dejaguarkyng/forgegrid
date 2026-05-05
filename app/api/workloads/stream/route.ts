@@ -16,6 +16,8 @@ function createHeartbeat() {
 }
 
 export async function GET(request: Request) {
+  let cleanup = () => {};
+
   const stream = new ReadableStream<Uint8Array>({
     start(controller) {
       let closed = false;
@@ -23,7 +25,7 @@ export async function GET(request: Request) {
       let pollTimer: ReturnType<typeof setTimeout> | null = null;
       let heartbeatTimer: ReturnType<typeof setInterval> | null = null;
 
-      const cleanup = () => {
+      cleanup = () => {
         if (closed) {
           return;
         }
@@ -78,7 +80,7 @@ export async function GET(request: Request) {
       }, HEARTBEAT_INTERVAL_MS);
     },
     cancel() {
-      request.signal.dispatchEvent(new Event("abort"));
+      cleanup();
     },
   });
 

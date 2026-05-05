@@ -26,7 +26,7 @@ export default function DashboardPage() {
 
     async function fetchWorkloads() {
       try {
-        const res = await fetch("/api/workloads");
+        const res = await fetch("/api/workloads", { cache: "no-store" });
         const data = await res.json();
 
         if (!res.ok) {
