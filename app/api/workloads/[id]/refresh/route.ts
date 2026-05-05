@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getWorkload, updateWorkload } from "@/lib/insforge";
-import { getJungleGridJobStatus, getJungleGridJobLogs } from "@/lib/junglegrid";
+import { getWorkload } from "@/lib/insforge";
+import { syncWorkload } from "@/lib/workload-sync";
 
 // ---------------------------------------------------------------------------
 // POST /api/workloads/[id]/refresh
@@ -34,51 +34,11 @@ export async function POST(
     );
   }
 
-  // Fetch status and logs from Jungle Grid
-  let newStatus = workload.status;
-  let logs = workload.logs ?? "";
-  let output = workload.output ?? "";
-  let error_message = workload.error_message ?? null;
-
   try {
-    const jobState = await getJungleGridJobStatus(workload.jungle_grid_job_id);
-
-    // Only transition to a known status; keep existing if ambiguous
-    const validTransitions: typeof newStatus[] = ["queued", "running", "completed", "failed"];
-    if (validTransitions.includes(jobState.status)) {
-      newStatus = jobState.status;
-    }
-  } catch (err) {
-    const message = err instanceof Error ? err.message : "Failed to fetch Jungle Grid status";
-    return NextResponse.json({ error: message }, { status: 502 });
-  }
-
-  // Fetch logs when the job has started or finished
-  if (newStatus === "running" || newStatus === "completed" || newStatus === "failed") {
-    try {
-      const jobLogs = await getJungleGridJobLogs(workload.jungle_grid_job_id);
-      logs = jobLogs.logs;
-      output = jobLogs.output;
-    } catch {
-      // Non-fatal — logs may not be available yet
-    }
-  }
-
-  if (newStatus === "failed" && !error_message) {
-    error_message = "Job failed on Jungle Grid. Check logs for details.";
-  }
-
-  // Persist refreshed fields to InsForge
-  try {
-    const updated = await updateWorkload(id, {
-      status: newStatus,
-      logs,
-      output,
-      error_message,
-    });
+    const updated = await syncWorkload(workload);
     return NextResponse.json(updated);
   } catch (err) {
-    const message = err instanceof Error ? err.message : "Failed to update workload";
-    return NextResponse.json({ error: message }, { status: 500 });
+    const message = err instanceof Error ? err.message : "Failed to sync workload";
+    return NextResponse.json({ error: message }, { status: 502 });
   }
 }

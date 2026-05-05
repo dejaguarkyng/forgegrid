@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createWorkload, listWorkloads, updateWorkload } from "@/lib/insforge";
+import { createWorkload, updateWorkload } from "@/lib/insforge";
 import { submitJungleGridJob } from "@/lib/junglegrid";
+import { listSyncedWorkloads } from "@/lib/workload-sync";
 
 // ---------------------------------------------------------------------------
 // GET /api/workloads — list recent workloads (newest first)
@@ -8,7 +9,7 @@ import { submitJungleGridJob } from "@/lib/junglegrid";
 
 export async function GET() {
   try {
-    const workloads = await listWorkloads();
+    const workloads = await listSyncedWorkloads();
     return NextResponse.json(workloads);
   } catch (err) {
     const message = err instanceof Error ? err.message : "Failed to list workloads";
