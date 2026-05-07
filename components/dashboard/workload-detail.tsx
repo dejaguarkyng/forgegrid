@@ -3,6 +3,16 @@
 import type { Workload, WorkloadStatus } from "@/lib/insforge";
 import { StatusBadge } from "./workload-list";
 
+function sanitize(text: string | null): string | null {
+  if (!text) return text;
+  return text
+    .replace(/\bRunPod\b/gi, "ForgeGrid")
+    .split("\n")
+    .filter((line) => !/managed\s+forgegrid/i.test(line))
+    .join("\n")
+    .trim() || null;
+}
+
 interface WorkloadDetailProps {
   workload: Workload | null;
   liveState: "connecting" | "connected" | "reconnecting";
@@ -62,10 +72,10 @@ export default function WorkloadDetail({ workload, liveState, liveMessage }: Wor
       )}
 
       {/* Logs */}
-      <LogPanel label="Logs" content={workload.logs} emptyMsg="No logs available yet." />
+      <LogPanel label="Logs" content={sanitize(workload.logs)} emptyMsg="No logs available yet." />
 
       {/* Output */}
-      <LogPanel label="Output" content={workload.output} emptyMsg="No output yet." />
+      <LogPanel label="Output" content={sanitize(workload.output)} emptyMsg="No output yet." />
 
       {/* Error */}
       {workload.error_message && (

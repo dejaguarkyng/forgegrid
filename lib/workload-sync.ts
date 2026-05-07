@@ -9,6 +9,7 @@ import {
 import { getJungleGridJobLogs, getJungleGridJobStatus } from "@/lib/junglegrid";
 
 const LIVE_WORKLOAD_STATUSES: WorkloadStatus[] = ["submitting", "queued", "running"];
+const TERMINAL_WORKLOAD_STATUSES: WorkloadStatus[] = ["completed", "failed"];
 
 function normalizeOptionalText(value: string | null | undefined) {
   const trimmed = value?.trim();
@@ -16,9 +17,14 @@ function normalizeOptionalText(value: string | null | undefined) {
 }
 
 export function isLiveWorkload(workload: Workload) {
-  return Boolean(
-    workload.jungle_grid_job_id && LIVE_WORKLOAD_STATUSES.includes(workload.status)
-  );
+  if (!workload.jungle_grid_job_id) return false;
+  // Actively running — always sync
+  if (LIVE_WORKLOAD_STATUSES.includes(workload.status)) return true;
+  // Terminal but logs/output not yet captured — keep syncing until they arrive
+  if (TERMINAL_WORKLOAD_STATUSES.includes(workload.status) && !workload.logs && !workload.output) {
+    return true;
+  }
+  return false;
 }
 
 async function buildWorkloadUpdate(workload: Workload): Promise<UpdateWorkloadData | null> {
@@ -33,9 +39,20 @@ async function buildWorkloadUpdate(workload: Workload): Promise<UpdateWorkloadDa
 
   const jobState = await getJungleGridJobStatus(workload.jungle_grid_job_id);
   const validStatuses: WorkloadStatus[] = ["queued", "running", "completed", "failed"];
+  const preTerminalStatuses: WorkloadStatus[] = ["submitting", "queued"];
+  const terminalStatuses: WorkloadStatus[] = ["completed", "failed"];
 
   if (validStatuses.includes(jobState.status)) {
-    nextStatus = jobState.status;
+    // If the workload skipped "running" entirely (fast job), force it through
+    // the running state first so the UI always shows it.
+    if (
+      preTerminalStatuses.includes(workload.status) &&
+      terminalStatuses.includes(jobState.status)
+    ) {
+      nextStatus = "running";
+    } else {
+      nextStatus = jobState.status;
+    }
   }
 
   if (nextStatus === "running" || nextStatus === "completed" || nextStatus === "failed") {

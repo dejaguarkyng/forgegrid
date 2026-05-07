@@ -224,20 +224,34 @@ export async function getJungleGridJobLogs(
       return `${prefix}${message}`;
     })
     .filter(Boolean)
-    .join("");
+    .join("\n");
 
   const outputFromItems = items
     .filter((item) => item.stream === "stdout")
     .map((item) => item.message ?? "")
     .filter(Boolean)
-    .join("");
+    .join("\n");
 
   const logs: string =
     logsFromItems || (data.logs ?? data.stdout ?? data.log ?? "");
+  // Prefer a dedicated output/result field from the API over stdout stream items,
+  // which only contain process lifecycle messages.
   const output: string =
-    outputFromItems || (data.output ?? data.result ?? data.response ?? data.stdout ?? "");
+    (data.output ?? data.result ?? data.response ?? "") || outputFromItems;
 
-  return { logs, output };
+  return { logs: sanitizeLogs(logs), output: sanitizeLogs(output) };
+}
+
+/**
+ * Strip vendor-specific branding from log/output strings.
+ */
+function sanitizeLogs(text: string): string {
+  return text
+    .replace(/\bRunPod\b/gi, "ForgeGrid")
+    .split("\n")
+    .filter((line) => !/managed\s+forgegrid/i.test(line))
+    .join("\n")
+    .trim();
 }
 
 /**
