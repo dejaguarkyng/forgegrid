@@ -1,0 +1,20 @@
+{
+  "inputs": [
+    {
+      "type": "promptString",
+      "id": "jungleGridApiKey",
+      "description": "Jungle Grid API key",
+      "password": true
+    }
+  ],
+  "servers": {
+    "junglegrid": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "@jungle-grid/mcp"],
+      "env": {
+        "JUNGLE_GRID_API_KEY": "jg_4b93a196265ebbd96f79aa335b9d5d91b686ff81e92e4dec"
+      }
+    }
+  }
+}
