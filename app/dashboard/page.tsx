@@ -122,6 +122,16 @@ export default function DashboardPage() {
     setSelectedWorkloadId(workload.id);
   }
 
+  async function handleDelete(id: string) {
+    const res = await fetch(`/api/workloads/${id}`, { method: "DELETE" });
+    if (!res.ok && res.status !== 204) {
+      const data = await res.json().catch(() => ({}));
+      throw new Error((data as { error?: string }).error ?? "Failed to delete workload");
+    }
+    setWorkloads((prev) => prev.filter((w) => w.id !== id));
+    if (selectedWorkloadId === id) setSelectedWorkloadId(null);
+  }
+
   return (
     <div className="min-h-screen bg-[#0a0a0f] text-white flex flex-col">
       {/* Page header */}
@@ -166,6 +176,7 @@ export default function DashboardPage() {
                   loading={loadingList}
                   selectedId={selectedWorkloadId}
                   onSelect={handleSelect}
+                  onDelete={handleDelete}
                 />
               )}
             </section>

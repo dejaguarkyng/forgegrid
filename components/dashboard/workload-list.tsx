@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import type { Workload, WorkloadStatus } from "@/lib/insforge";
 
 interface WorkloadListProps {
@@ -7,6 +8,7 @@ interface WorkloadListProps {
   loading: boolean;
   selectedId: string | null;
   onSelect: (workload: Workload) => void;
+  onDelete: (id: string) => Promise<void>;
 }
 
 const statusBadge: Record<WorkloadStatus, { label: string; cls: string }> = {
@@ -36,7 +38,20 @@ function formatDate(iso: string) {
   });
 }
 
-export default function WorkloadList({ workloads, loading, selectedId, onSelect }: WorkloadListProps) {
+export default function WorkloadList({ workloads, loading, selectedId, onSelect, onDelete }: WorkloadListProps) {
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+
+  async function handleDelete(e: React.MouseEvent, id: string) {
+    e.stopPropagation();
+    if (deletingId) return;
+    setDeletingId(id);
+    try {
+      await onDelete(id);
+    } finally {
+      setDeletingId(null);
+    }
+  }
+
   if (loading) {
     return (
       <div className="space-y-2">
@@ -61,7 +76,7 @@ export default function WorkloadList({ workloads, loading, selectedId, onSelect 
   return (
     <ul className="space-y-2">
       {workloads.map((w) => (
-        <li key={w.id}>
+        <li key={w.id} className="relative group">
           <button
             onClick={() => onSelect(w)}
             className={`w-full text-left rounded-xl border px-4 py-3.5 transition-colors ${
@@ -82,6 +97,21 @@ export default function WorkloadList({ workloads, loading, selectedId, onSelect 
                 <span className="text-[11px] text-white/25">{formatDate(w.created_at)}</span>
               </div>
             </div>
+          </button>
+          <button
+            onClick={(e) => handleDelete(e, w.id)}
+            disabled={deletingId === w.id}
+            aria-label="Delete workload"
+            className="absolute top-2.5 right-2.5 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg p-1.5 text-white/30 hover:text-red-400 hover:bg-red-500/10 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            {deletingId === w.id ? (
+              <span className="inline-block h-3.5 w-3.5 rounded-full border-2 border-white/20 border-t-red-400 animate-spin" />
+            ) : (
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden>
+                <path d="M1.75 3.5h10.5M5.25 3.5V2.333a.583.583 0 0 1 .583-.583h2.334a.583.583 0 0 1 .583.583V3.5M11.083 3.5l-.583 7.583a.583.583 0 0 1-.583.584H4.083a.583.583 0 0 1-.583-.584L2.917 3.5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
+                <path d="M7 6.125v3.5M5.25 6.125l.291 3.5M8.75 6.125l-.291 3.5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/>
+              </svg>
+            )}
           </button>
         </li>
       ))}

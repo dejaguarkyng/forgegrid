@@ -149,6 +149,13 @@ export async function getWorkload(id: string): Promise<Workload | null> {
 }
 
 /**
+ * Delete a workload record by id.
+ */
+export async function deleteWorkload(id: string): Promise<void> {
+  await rawsql("DELETE FROM workloads WHERE id = $1", [id]);
+}
+
+/**
  * Update a workload record's fields.
  */
 export async function updateWorkload(

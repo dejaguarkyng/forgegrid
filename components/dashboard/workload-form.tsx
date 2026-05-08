@@ -8,14 +8,15 @@ interface WorkloadFormProps {
 }
 
 const defaults = {
-  name: "Llama 3.1 Founder Demo",
+  name: "InsForge x Jungle Grid Product Team Demo",
   workload_type: "inference",
-  model_size: "8b",
-  image: "pytorch/pytorch:2.4.0-cuda12.1-cudnn9-runtime",
-  command: "python run_inference.py --model llama-3.1 --prompt-file /inputs/prompt.txt",
+  model_size: "0.5b",
+  image: "huggingface/transformers-pytorch-gpu:4.41.3",
+  command:
+    `sh -lc 'python3 -c "import os;from transformers import pipeline;t=open(\\"/inputs/prompt.txt\\").read() if os.path.exists(\\"/inputs/prompt.txt\\") else \\"Explain in 5 sentences why InsForge and Jungle Grid make a strong demo stack for AI product teams.\\";g=pipeline(\\"text-generation\\",model=\\"Qwen/Qwen2.5-0.5B-Instruct\\",device=0);print(g(t,max_new_tokens=80,do_sample=False)[0][\\"generated_text\\"])"'`,
   optimize_for: "balanced",
   input_text:
-    "Summarize why InsForge and Jungle Grid make a strong demo stack for AI product teams.",
+    "Explain in 5 sentences why InsForge and Jungle Grid make a strong demo stack for AI product teams.",
 };
 
 export default function WorkloadForm({ onSubmitted }: WorkloadFormProps) {
