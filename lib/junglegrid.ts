@@ -21,6 +21,7 @@ export interface JungleGridPayload {
   image: string;
   command: string;
   optimize_for: string;
+  environment?: Record<string, string>;
   metadata?: Record<string, unknown>;
 }
 
@@ -135,6 +136,7 @@ export async function submitJungleGridJob(
     image: payload.image,
     command: payload.command || undefined,
     optimize_for: normalizeOptimizeFor(payload.optimize_for),
+    environment: payload.environment ?? {},
     metadata: payload.metadata ?? {},
   };
 

@@ -77,12 +77,16 @@ export async function POST(request: NextRequest) {
 
   // Step 2: Submit the job to Jungle Grid from the server
   try {
+    const environment: Record<string, string> = {};
+    if (input_text?.trim()) environment["PROMPT"] = input_text.trim();
+
     const result = await submitJungleGridJob({
       workload_type,
       model_size,
       image,
       command,
       optimize_for,
+      environment,
       metadata: {
         workload_id: workload.id,
         name,
