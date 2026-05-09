@@ -8,15 +8,14 @@ interface WorkloadFormProps {
 }
 
 const defaults = {
-  name: "InsForge x Jungle Grid Product Team Demo",
+  name: "Hugging Face Sentiment Inference",
   workload_type: "inference",
   model_size: "0.5b",
   image: "huggingface/transformers-pytorch-gpu:4.41.3",
   command:
-    `sh -lc 'python3 -c "import os;from transformers import pipeline;t=os.environ.get(\\'PROMPT\\',\\'Explain in 5 sentences why InsForge and Jungle Grid make a strong demo stack for AI product teams.\\');g=pipeline(\\'text-generation\\',model=\\'Qwen/Qwen2.5-0.5B-Instruct\\',device=0);print(g(t,max_new_tokens=80,do_sample=False)[0][\\'generated_text\\'])"'`,
+    `python3 -c 'from transformers import pipeline; clf = pipeline("sentiment-analysis", model="distilbert-base-uncased-finetuned-sst-2-english", device=0); print(clf("Jungle Grid makes GPU inference workloads easier to run."))'`,
   optimize_for: "balanced",
-  input_text:
-    "Explain in 5 sentences why InsForge and Jungle Grid make a strong demo stack for AI product teams.",
+  input_text: "",
 };
 
 export default function WorkloadForm({ onSubmitted }: WorkloadFormProps) {
