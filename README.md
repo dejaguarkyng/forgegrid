@@ -56,6 +56,17 @@ Open [http://localhost:3000](http://localhost:3000).
 
 ---
 
+## Open Source
+
+ForgeGrid is open source under the MIT license.
+
+- See `LICENSE` for usage rights.
+- See `CONTRIBUTING.md` for contribution workflow.
+- See `CODE_OF_CONDUCT.md` for community expectations.
+- See `SECURITY.md` for private vulnerability reporting.
+
+---
+
 ## Architecture
 
 ```
